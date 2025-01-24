@@ -1,0 +1,66 @@
+# Load zprof to profile zsh startup if ZSH_PROFILE is set
+if [ -n "${ZSH_PROFILE+1}" ]; then
+    zmodload zsh/zprof
+fi
+
+# Use vi keybindings in Zsh
+bindkey -v
+
+# Automatically switch to a directory by typing its name
+setopt auto_cd
+
+# PATH configuration
+PATH=$HOME/.local/bin:$PATH
+
+# Configure history settings
+HISTFILE=$HOME/.zsh_history  # File to store command history
+HISTSIZE=10000              # Number of commands to keep in memory
+SAVEHIST=10000              # Number of commands to save to file
+setopt appendhistory        # Append to history file instead of overwriting
+
+
+# Set editor and visual editor to Neovim with remote support
+# TODO: Need to figure out how to how to handle configuring the neovim socket
+# > I don't think multiple neovim instances can use the same socket.
+# > In that case, I can't simply alias nvim to nvim --listen ..., since I
+# > might need to have multiple instances of nvim.  But if I can't do that
+# > how do I get nvr to do the right thing?
+# EDITOR="nvr -s"
+# VISUAL="nvr -s"
+EDITOR=nvim
+VISUAL=nvim
+
+# Set default zk notebook directory
+ZK_NOTEBOOK_DIR=~/notes
+
+# Source plugins and extensions
+source ~/.config/zsh/zsh-autosuggestions/zsh-autosuggestions.zsh  # Autosuggestions
+eval "$(starship init zsh)"                                       # Starship prompt
+eval "$(zoxide init zsh)"                                         # Zoxide for navigation
+
+# Neovim aliases
+alias vim="nvim"
+alias vimF='nvim $(fzf)'                      # Open Neovim with FZF
+alias vimf='nvim $(FZF_DEFAULT_COMMAND="fd ." fzf)'
+alias vimj='nvim $(FZF_DEFAULT_COMMAND="fd "2025.*.md" ~/journal" fzf)'
+alias vimJ='nvim $(FZF_DEFAULT_COMMAND="fd .md ~/journal" fzf)'
+
+alias cdr='cd "$(git rev-parse --show-toplevel)"' # Move to repo root
+alias ls="eza"
+
+# Initialize completion system
+autoload -Uz compinit
+# Automatically clean up old .zcompdump files and initialize completion
+for dump in ~/.zcompdump(N.mh+24); do
+  # Remove .zcompdump files older than 24 hours
+  rm -f "$dump"
+done
+compinit -C  # Initialize completion with cache enabled
+
+# Enable direnv
+eval "$(direnv hook zsh)"
+
+# Display zsh startup profile if profiling is enabled
+if [ -n "${ZSH_PROFILE+1}" ]; then
+    zprof
+fi
